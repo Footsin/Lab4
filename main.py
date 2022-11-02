@@ -1,6 +1,7 @@
 import math
 import numpy
 import os
+from locale import atof, setlocale, LC_NUMERIC
 
 def print_man():
     os.system('cls')
@@ -17,10 +18,10 @@ def print_results(coeffs):
     for i in range(len(coeffs)):
         print(f'Весовой коэффициент для {i + 1}-го критерия: {coeffs[i]}')
 
-def input_num(msg, min=None):
+def input_num(msg, min=None, type=int):
     while True:
         try:
-            num = int(input(msg + ': '))
+            num = int(input(msg + ': ')) if type == int else atof(input(msg + ': '))
         except:
             print('\033[31m{}\033[0m'.format('Invalid value. Try again...'))
             continue
@@ -29,6 +30,8 @@ def input_num(msg, min=None):
             print('\033[31m{}\033[0m'.format(f'Value must be greater than {min}! Try again...'))
             continue
         return num
+
+setlocale(LC_NUMERIC, '')
 
 print_man()
 count = input_num('Введите количество критериев', min=2)
@@ -39,7 +42,7 @@ for i in range(matrix.shape[0]):
     for j in range(matrix.shape[1]):
         if matrix[i, j] == 1:
             break
-        matrix[i, j] = input_num(f'Введите числовое значение критерия {i + 1} строки {j + 1} столбца в матрице')
+        matrix[i, j] = input_num(f'Введите результат сравнения 2-х критериев по важности для ячейки [{i + 1}][{j + 1}]', type=float)
         matrix[j, i] = matrix[0, 0] / matrix[i, j]
 
 mults = []
@@ -52,4 +55,3 @@ sumAllMult = numpy.array(mults).sum()
 coeffs = [round(mults[i] / sumAllMult, 2) for i in range(len(mults))]
 
 print_results(coeffs)
-
