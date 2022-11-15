@@ -1,57 +1,63 @@
-import math
-import numpy
-import os
-from locale import atof, setlocale, LC_NUMERIC
+import numpy as np
+import functools
 
-def print_man():
-    os.system('cls')
-    print('\033[92m{}\033[0m'.format('РУКОВОДСТВО ПО ИСПОЛЬЗОВАНИЮ\n\n') + 
-        'Программа реализует метод анализа иерархий Томаса Саати для одного уровня.\n' +
-        'Пользователь вводит целочисленные данные для заполнения единичной матрицы с \n' +
-        'одной стороны от диагонали, другая сторона зеркалится в виде 1 / x.\n' +
-        'x — число введенное пользователем.\n' +
-        'На основании введенных данных выводятся весовые коэффициенты для каждого критерия.\n')
+while True:
+    criterion_amount = int(input('Введите количество критериев(начиная от 2): '))
+    if criterion_amount < 2:
+        print('Введите корректное количество!')
+        continue
+    else:
+        break
 
-def print_results(coeffs):
-    os.system('cls')
-    print('\033[92m{}\033[0m'.format('ВЕСОВЫЕ КОЭФФИЦИЕНТЫ ДЛЯ КАЖДОГО КРИТЕРИЯ\n'))
-    for i in range(len(coeffs)):
-        print(f'Весовой коэффициент для {i + 1}-го критерия: {coeffs[i]}')
+crit_name_list = []
+for i in range(criterion_amount):
+    criterion_name = input('Введите название криетерия №{}: '.format(i + 1))
+    crit_name_list.append(criterion_name)
 
-def input_num(msg, min=None, type=int):
-    while True:
-        try:
-            num = int(input(msg + ': ')) if type == int else atof(input(msg + ': '))
-        except:
-            print('\033[31m{}\033[0m'.format('Invalid value. Try again...'))
-            continue
+crit_name_list_copy = crit_name_list
 
-        if min != None and num < min:
-            print('\033[31m{}\033[0m'.format(f'Value must be greater than {min}! Try again...'))
-            continue
-        return num
+# Создаем матрицу (диагональ - единицы)
+a = np.eye(criterion_amount)
 
-setlocale(LC_NUMERIC, '')
+# Запрос критериев и рассчет обратных значений
+while True:
+    for i in range(len(crit_name_list)):
+        for m in range(len(crit_name_list_copy)):
+            if i >= m:
+                continue
+            else:
+                while True:
+                    crit = float(input('Введите криетерий попарного сравнения {}/{}: '.format(crit_name_list[i], crit_name_list[m])))
+                    if crit < 0:
+                        print('Введите корректное значение!')
+                        continue
+                    else:
+                        break
+                a[i, m] = round(crit, 2)
+                a[m, i] = round(1 / crit, 2)
 
-print_man()
-count = input_num('Введите количество критериев', min=2)
+    lamd = []
 
-matrix = numpy.eye(count)
+    degr_crit = 1 / criterion_amount 
+    for i in range(criterion_amount):
+        lamd.append(round(functools.reduce(lambda a, b : a * b, a[i]) ** degr_crit, 2))
 
-for i in range(matrix.shape[0]):
-    for j in range(matrix.shape[1]):
-        if matrix[i, j] == 1:
-            break
-        matrix[i, j] = input_num(f'Введите результат сравнения 2-х критериев по важности для ячейки [{i + 1}][{j + 1}]', type=float)
-        matrix[j, i] = matrix[0, 0] / matrix[i, j]
+    s_lamd = sum(lamd)
+    correct_kf = []
+    kf = {}
+    for i in range(len(lamd)):
+        kf[crit_name_list[i]] = round(lamd[i] / s_lamd, 2)
+        correct_kf.append(round(lamd[i] / s_lamd, 2))
 
-mults = []
-for vector in matrix:
-    multiLine = vector.prod()
-    mults.append(math.pow(multiLine, 1 / count))
-
-sumAllMult = numpy.array(mults).sum()
-
-coeffs = [round(mults[i] / sumAllMult, 2) for i in range(len(mults))]
-
-print_results(coeffs)
+    # Проверка на сумму весовых кф с последующим выводом
+    if sum(correct_kf) == 1:
+        for i in kf:
+            print(i + ':', str(kf[i]))
+    else:
+        final_dict = [max(kf.items(), key=lambda k_v: k_v[1])][0][0]
+        u = 1 - sum(correct_kf)
+        kf[final_dict] += u
+        for i in kf:
+            print(i + ':', str(kf[i]))
+        print(sum(correct_kf))
+    break
